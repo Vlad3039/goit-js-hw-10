@@ -1,30 +1,45 @@
-import { fetchBreeds, fetchCatByBreed } from './cat-api.js';
-import { refs } from './refs.js';
+import axios from 'axios';
 import Notiflix from 'notiflix';
+import { fetchBreeds, fetchCatByBreed } from './cat-api';
+import { refs } from './refs';
+import { API_KEY } from './config';
+import SlimSelect from 'slim-select';
+axios.defaults.headers.common['x-api-key'] = API_KEY;
+let breedSelect;
 async function populateBreedsSelect() {
   try {
-    refs.loader.style.display = 'block';
+    refs.loaderRef.style.display = 'block';
     const breeds = await fetchBreeds();
     breeds.forEach(breed => {
       const option = document.createElement('option');
       option.value = breed.id;
       option.textContent = breed.name;
-      refs.breedSelect.appendChild(option);
+      refs.breedSelectRef.appendChild(option);
+    });
+    // Ініціалізуємо SlimSelect
+    breedSelect = new SlimSelect({
+      select: refs.breedSelectRef, // Вказуємо селект, який бажаємо стилізувати
+      placeholder: 'Select a breed',
+      searchPlaceholder: 'Search...',
     });
   } catch (err) {
-    refs.error.style.display = 'block';
+    refs.errorRef.style.display = 'block';
     console.error(err);
     Notiflix.Notify.failure('An error occurred while loading cat breeds');
   } finally {
-    refs.loader.style.display = 'none';
+    refs.loaderRef.style.display = 'none';
   }
 }
 async function searchCat() {
-  const selectedBreedId = refs.breedSelect.value;
+  const selectedBreedId = breedSelect.selected(); // Отримуємо вибрані значення за допомогою SlimSelect
   try {
-    refs.loader.style.display = 'block';
-    refs.error.style.display = 'none';
-    const catData = await fetchCatByBreed(selectedBreedId);
+    refs.loaderRef.style.display = 'block';
+    refs.errorRef.style.display = 'none';
+    if (selectedBreedId.length === 0) {
+      refs.catInfoRef.innerHTML = '';
+      return;
+    }
+    const catData = await fetchCatByBreed(selectedBreedId[0].value);
     if (catData) {
       const catInfoTemplate = `
     <div style="display: flex; align-items: center;">
@@ -37,18 +52,22 @@ async function searchCat() {
       </div>
     </div>
   `;
-      refs.catInfo.innerHTML = catInfoTemplate;
+      refs.catInfoRef.innerHTML = catInfoTemplate;
     } else {
-      refs.catInfo.innerHTML = '';
-      Notiflix.Notify.warning('There is no data on this breed of cat');
+      refs.catInfoRef.innerHTML = '';
+      Notiflix.Notify.warning(
+        'SORRY, but there is no data on this breed of cats in the database'
+      );
     }
   } catch (err) {
-    refs.error.style.display = 'block';
+    refs.errorRef.style.display = 'block';
     console.error(err);
-    Notiflix.Notify.failure('An error occurred while searching for a cat');
+    Notiflix.Notify.failure(
+      'WARNING! An error occurred while searching for a cat'
+    );
   } finally {
-    refs.loader.style.display = 'none';
+    refs.loaderRef.style.display = 'none';
   }
 }
-refs.breedSelect.addEventListener('change', searchCat);
 populateBreedsSelect();
+refs.breedSelectRef.addEventListener('change', searchCat);

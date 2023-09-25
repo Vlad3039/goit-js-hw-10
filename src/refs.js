@@ -1,6 +1,6 @@
 export const refs = {
-  breedSelect: document.querySelector('.breed-select'),
-  loader: document.querySelector('.loader'),
-  error: document.querySelector('.error'),
-  catInfo: document.querySelector('.cat-info'),
+  breedSelectRef: document.querySelector('.breed-select'),
+  loaderRef: document.querySelector('.loader'),
+  errorRef: document.querySelector('.error'),
+  catInfoRef: document.querySelector('.cat-info'),
 };
